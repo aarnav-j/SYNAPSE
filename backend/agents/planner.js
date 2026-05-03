@@ -1,113 +1,103 @@
-const callLocalAI = require("../services/service");
+// ─────────────────────────────────────────────
+// SYNAPSE — Planner Agent
+// Breaks user prompt into structured coding tasks
+// Each task = exactly one file with filename
+// ─────────────────────────────────────────────
+
+const callAI = require("../services/aiservice");
+const log = require("../utils/logger");
+
+// ── Parse numbered list into task objects ──
 
 function parsePlannerOutput(raw) {
-    return raw
+    log.step("PLANNER", "Parsing output...");
+
+    const tasks = raw
         .split("\n")
-        .map(line => line.trim())
-        .filter(line => /^\d+[\.\)]\s+\S/.test(line))
-        .map(line => line.replace(/^\d+[\.\)]\s+/, "").trim())
-        .filter(line => line.length > 5 && line.length < 120)
-        .filter(line => !line.startsWith("//") && !line.startsWith("#"))
-        .slice(0, 5)
-        .map((task, index) => ({
-            step: index + 1,
+        .map(l => l.trim())
+        .filter(l => /^\d+\.\s/.test(l))
+        .map(l => l.replace(/^\d+\.\s/, ""))
+        .filter(l => l.length > 5 && l.length < 150)
+        .map((task, i) => ({
+            step: i + 1,
             task
         }));
+
+    log.success("PLANNER", `Parsed ${tasks.length} tasks`);
+
+    return tasks;
 }
-function normalizeTasks(tasks, prompt) {
-    return tasks.map(t => {
-        let task = t.task;
 
-        if (prompt.toLowerCase().includes("chat")) {
-            task = task.replace(/video/gi, "message");
-            task = task.replace(/VideoPlayer/gi, "ChatBox");
-        }
-
-        if (prompt.toLowerCase().includes("ecommerce")) {
-            task = task.replace(/video/gi, "product");
-            task = task.replace(/VideoPlayer/gi, "ProductCard");
-        }
-
-        return {
-            ...t,
-            task
-        };
-    });
-}
+// ── Main Planner Function ──
 
 async function plannerAgent(prompt) {
-    console.log("🧠 Planner started...");
-
-    const basePlan = [
-        "Setup project structure",
-        "Create backend server",
-        "Create frontend UI",
-        "Implement core feature",
-        "Testing and deployment"
-    ];
+    log.step("PLANNER", "Started...");
 
     const plannerPrompt = `
-You are a code task planner. Your only job is to output a numbered list of coding tasks.
+You are a code task planner. Output ONLY a numbered list of coding tasks.
 
-TECH STACK RULES (STRICT):
-- Use ONLY Node.js (Express) for backend
-- Use ONLY React (.jsx) for frontend
-- NEVER use PHP, Laravel, Python, Django, Flask, Java, or any other language/framework
+TECH STACK (STRICT — never deviate):
+- Backend: Node.js with Express only
+- Frontend: React with .jsx files only
+- NEVER use: PHP, Python, Laravel, Django, Flask, Java, TypeScript
 
-RULES (never break these):
-- Output ONLY a numbered list. Nothing else.
-- Each line must start with a number, a period, and a space: "1. "
-- Maximum 5 tasks.
-- Each task must name a specific file or function to implement.
-- Each task must be 10 words or fewer.
-- Do NOT write explanations, comments, headers, or blank lines.
-- Do NOT use bullet points, dashes, or asterisks.
-- Do NOT write "Step", "Task", "//", "#", or any prefix other than the number.
-- Do NOT include design tasks, planning tasks, or testing tasks.
-- Tasks must be purely about writing code that can be executed.
+FILE RULES (never break):
+- Each task must produce EXACTLY one file
+- Backend files MUST use .js extension
+- Frontend (React) files MUST use .jsx extension (e.g. App.jsx, index.jsx). NEVER use .js for React.
+- Each task must include the exact filename with extension
+- Each task must be 12 words or fewer
+- Output 6 to 8 tasks total — enough to cover a full working project
+- Tasks must cover: entry point, routes, middleware, data layer, and UI components
 
-BAD OUTPUT (never do this):
+FORMAT RULES (never break):
+- Every line starts with: number, period, space → "1. "
+- No explanations. No headers. No blank lines. No comments.
+- No bullet points, dashes, asterisks, or "Step" prefix
+- No design tasks, no testing tasks, no install tasks
+
+BAD OUTPUT (never produce this):
 - Set up the project
-- Design the UI layout
-// Step 1: Create server
-* Install dependencies
-BAD OUTPUT:
-- Laravel
-- Python backend
-- Generic steps
+- Design the UI
+// Step 1
+* Install packages
+1. Create backend (missing filename)
+1. Create server.js and routes.js (two files — not allowed)
 
-GOOD OUTPUT (always do this):
-1. Create server.js with Express and listen on port 3000
-2. Add GET /videos route returning JSON array in server.js
-3. Add POST /upload route with multer middleware in server.js
-4. Create VideoPlayer.jsx rendering an HTML5 video tag
-5. Create App.jsx fetching /videos and rendering VideoPlayer list
+GOOD OUTPUT (always produce this):
+1. Create server.js with Express app listening on port 3000
+2. Create routes/videos.js with GET and POST route handlers
+3. Create middleware/upload.js with multer disk storage config
+4. Create models/videoModel.js with in-memory video data store
+5. Create App.jsx fetching /videos and rendering video list
+6. Create components/VideoPlayer.jsx rendering HTML5 video element
+7. Create components/UploadForm.jsx with file input and POST handler
+8. Create index.jsx as React entry point rendering App into root div
 
-Now output the task list for this project:
-${prompt}
+Now output the task list for this project. Follow ALL rules above exactly.
+Project: ${prompt}
 `;
 
+    const raw = await callAI(plannerPrompt);
 
-    const aiResponse = await callLocalAI(plannerPrompt);
+    log.ai("PLANNER", "Raw output received");
 
-    console.log("🤖 Raw AI response:", aiResponse);
-
-    const parsedTasks = parsePlannerOutput(aiResponse);
-    const finalTasks = normalizeTasks(parsedTasks, prompt);
-
-    if (finalTasks.length === 0) {
-        return {
-            basePlan,
-            coreFeaturePlan: [
-                { step: 1, task: "Create server.js Express app listening on port 3000" }
-            ]
-        };
+    if (!raw || raw.trim().length === 0) {
+        log.error("PLANNER", "AI returned empty response");
+        return [{ step: 1, task: "Create server.js with Express app on port 3000" }];
     }
 
-    return {
-        basePlan,
-        coreFeaturePlan: finalTasks
-    };
+    const tasks = parsePlannerOutput(raw);
+
+    if (!tasks.length) {
+        log.warn("PLANNER", "Parsing failed — using fallback task");
+
+        return [
+            { step: 1, task: "Create server.js with Express app on port 3000" }
+        ];
+    }
+
+    return tasks;
 }
 
 module.exports = plannerAgent;

@@ -1,60 +1,63 @@
+// ─────────────────────────────────────────────
+// SYNAPSE — File Manager
+// Saves generated code and docs to output folders
+// backend/ for .js, frontend/ for .jsx, docs/ for .md
+// ─────────────────────────────────────────────
+
 const fs = require("fs");
 const path = require("path");
+const log = require("./logger");
 
-const BASE_DIR = path.join(__dirname, "..", "output");
+const BASE = path.join(__dirname, "..", "output");
+
+// ── Ensure parent directories exist ──
 
 function ensureDir(filePath) {
     fs.mkdirSync(path.dirname(filePath), { recursive: true });
 }
 
-function resolveFilePath(task) {
-    const lower = task.toLowerCase();
+// ── Resolve output path based on file extension and path ──
 
-    if (lower.includes("server") || lower.includes("route")) {
-        return path.join(BASE_DIR, "backend", "server.js");
+function resolvePath(projectName, filename) {
+    const isFrontend = 
+        filename.endsWith(".jsx") || 
+        filename.endsWith(".css") || 
+        filename.includes("components/") || 
+        filename.includes("pages/") || 
+        filename === "App.js" || 
+        filename === "index.js" ||
+        filename.includes("src/");
+
+    if (isFrontend) {
+        return path.join(BASE, projectName, "frontend", filename);
     }
-
-    if (task.includes("App.jsx")) {
-        return path.join(BASE_DIR, "frontend", "App.jsx");
-    }
-
-    if (task.includes("VideoPlayer")) {
-        return path.join(BASE_DIR, "frontend", "VideoPlayer.jsx");
-    }
-
-    return path.join(BASE_DIR, "misc", "misc.js");
+    return path.join(BASE, projectName, "backend", filename);
 }
 
-function resolveDocPath(task) {
-    const name = task.replace(/\s+/g, "_").slice(0, 30);
-    return path.join(BASE_DIR, "docs", `${name}.md`);
-}
+// ── Save a generated code file ──
 
-function saveCode(task, code) {
-    const filePath = resolveFilePath(task);
+function saveFile(projectName, file) {
+    const filePath = resolvePath(projectName, file.filename);
 
     ensureDir(filePath);
 
-    fs.writeFileSync(filePath, code);
+    fs.writeFileSync(filePath, file.code);
 
-    console.log("💾 Saved code →", filePath);
+    log.save("FILE", `Saved → ${filePath}`);
 }
 
-function saveDocs(task, explanation) {
-    if (!explanation) return;
+// ── Save documentation for a file ──
 
-    const docPath = resolveDocPath(task);
+function saveDocs(projectName, file) {
+    const docPath = path.join(BASE, projectName, "docs", file.filename + ".md");
 
     ensureDir(docPath);
 
-    const content = `# ${task}\n\n${explanation}\n\n---\n`;
+    const content = `# ${file.filename}\n\n${file.explanation}\n`;
 
-    fs.appendFileSync(docPath, content);
+    fs.writeFileSync(docPath, content);
 
-    console.log("📝 Saved docs →", docPath);
+    log.save("FILE", `Docs → ${docPath}`);
 }
 
-module.exports = {
-    saveCode,
-    saveDocs
-};
+module.exports = { saveFile, saveDocs };

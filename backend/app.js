@@ -1,75 +1,88 @@
+// ─────────────────────────────────────────────
+// SYNAPSE — Express Server (Thin API Layer)
+// All logic lives in the orchestrator
+// This file only handles HTTP routing
+// ─────────────────────────────────────────────
+
 require("dotenv").config();
+
 const express = require("express");
+const { startRedis } = require("./utils/redis-server");
+const log = require("./utils/logger");
+
 const app = express();
-const plannerAgent = require("./agents/planner");
-const executorAgent = require("./agents/executor");
-
-
-const { saveCode, saveDocs } = require("./utils/fileManager");
-
 app.use(express.json());
 
-app.post("/prompt", async (req, res) => {
-    console.log("🔥 Request received");
+// Initialize Redis and Queue, then start server
+startRedis().then(() => {
+    const orchestrator = require("./agents/orchestrator");
+    const { getAllRuns, getRunById } = require("./utils/memory");
+
+    // ── POST /prompt — Run the full pipeline ──
+    app.post("/prompt", async (req, res) => {
+    log.info("SERVER", "Request received on /prompt");
 
     const { prompt } = req.body;
 
-    try {
-        const plan = await plannerAgent(prompt);
-
-        const tasks = plan.coreFeaturePlan;
-
-        if (!tasks || tasks.length === 0) {
-            return res.json({
-                success: false,
-                error: "No tasks generated"
-            });
-        }
-
-        const results = [];
-
-        // 🔥 SEQUENTIAL EXECUTION (IMPORTANT)
-        for (let i = 0; i < tasks.length; i++) {
-            const taskObj = tasks[i];
-
-            const result = await executorAgent(
-                taskObj.task,
-                tasks,
-                prompt,
-                i,
-                tasks.length
-            );
-            // 💾 SAVE CODE TO FILE
-            saveCode(taskObj.task, result.code);
-
-            // 📝 SAVE EXPLANATION
-            saveDocs(taskObj.task, result.explanation);
-
-            results.push({
-                step: taskObj.step,
-                task: taskObj.task,
-                code: result.code,
-                explanation: result.explanation
-            });
-        }
-
-        res.json({
-            success: true,
-            basePlan: plan.basePlan,
-            execution: results,
-            message: "Files generated in /output folder"
-        });
-
-    } catch (error) {
-        console.error(error);
-
-        res.status(500).json({
+    if (!prompt || prompt.trim().length === 0) {
+        return res.status(400).json({
             success: false,
-            error: "Something went wrong"
+            error: "Prompt is required"
         });
+    }
+
+    const result = await orchestrator.run(prompt.trim());
+
+    if (result.success) {
+        res.json(result);
+    } else {
+        res.status(500).json(result);
     }
 });
 
-app.listen(3005, () => {
-    console.log("🚀 Server running on port 3005");
+// ── GET /history — View all past runs ──
+
+app.get("/history", (req, res) => {
+    log.info("SERVER", "Request received on /history");
+
+    const runs = getAllRuns();
+
+    res.json({
+        total: runs.length,
+        runs
+    });
+});
+
+// ── GET /history/:id — View a specific run ──
+
+app.get("/history/:id", (req, res) => {
+    log.info("SERVER", `Request received for run: ${req.params.id}`);
+
+    const run = getRunById(req.params.id);
+
+    if (!run) {
+        return res.status(404).json({ error: "Run not found" });
+    }
+
+    res.json(run);
+});
+
+    // ── GET /status — Health check ──
+    app.get("/status", (req, res) => {
+        res.json({
+            status: "running",
+            system: "SYNAPSE",
+            version: "2.0.0",
+            uptime: Math.floor(process.uptime()) + "s"
+        });
+    });
+
+    // ── Start server ──
+    app.listen(3005, () => {
+        log.success("SERVER", "SYNAPSE running on http://localhost:3005");
+        log.info("SERVER", "Endpoints: POST /prompt | GET /history | GET /status");
+    });
+}).catch(err => {
+    log.error("SERVER", "Failed to start Redis, aborting startup");
+    process.exit(1);
 });

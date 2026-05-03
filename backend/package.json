@@ -13,9 +13,11 @@
   "description": "",
   "dependencies": {
     "@google/genai": "^1.51.0",
-    "@google/generative-ai": "^0.24.1",
-    "axios": "^1.15.2",
+    "bullmq": "^5.76.5",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "ioredis": "^5.10.1",
+    "ioredis-mock": "^8.13.1",
+    "redis-memory-server": "^0.16.1"
   }
 }

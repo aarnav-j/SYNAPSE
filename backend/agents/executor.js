@@ -1,58 +1,104 @@
-const callLocalAI = require("../services/service");
+// ─────────────────────────────────────────────
+// SYNAPSE — Executor Agent (Batch Mode)
+// Generates all project files in a single AI call
+// Uses <FILE> tag format for machine parsing
+// ─────────────────────────────────────────────
 
-function extractCodeAndExplanation(raw) {
-    if (!raw) return { code: "", explanation: "" };
+const callAI = require("../services/aiservice");
+const { parseBatchOutput } = require("../utils/parser");
+const log = require("../utils/logger");
 
-    // Extract code starting from first real code keyword
-    const codeMatch = raw.match(/(const|import|function|export)[\s\S]*/);
+// ── Extract filename from task text ──
 
-
-    // Everything BEFORE code = explanation
-    const index = raw.search(/(const|import|function|export)/);
-    const code = index !== -1 ? raw.slice(index).trim() : "";
-    const explanation = index !== -1 ? raw.slice(0, index).trim() : raw.trim();
-
-    return { code, explanation };
+function extractFilename(task) {
+    const match = task.match(/[\w/]+\.(js|jsx)/i);
+    return match ? match[0] : "unknown.js";
 }
-function buildExecutorPrompt(plan, task, index, total) {
-    return `
-You are a code generation engine. You output raw source code only.
 
-STRICT RULES:
-- Output raw code only. No explanations. No markdown.
-- Minimal comments allowed for clarity
-- Do NOT write \`\`\` or code fences.
-- Do NOT write sentences.
-- Do NOT mix frontend/backend.
-- If task contains "server", "route", "Express" → Node.js only.
-- If task contains ".jsx" or "React" → React only.
-- Write complete working code.
-- No placeholders. No TODOs.
-- Code must run without modification.
+// ── Build the batch prompt for all tasks ──
+
+function buildBatchExecutorPrompt(plan) {
+    log.step("EXECUTOR", "Building batch prompt...");
+
+    const taskList = plan.map((t, i) => `${i + 1}. ${t.task}`).join("\n");
+    const fileList = plan.map((t, i) => `${i + 1}. ${extractFilename(t.task)}`).join("\n");
+
+    return `
+You are a code generation engine. You generate complete source code for multiple files in one response.
+
+TECH STACK:
+- Backend files (.js without .jsx): Node.js and Express only
+- Frontend files (.jsx): React functional components only
+- No TypeScript. No PHP. No Python. No class components.
+
+OUTPUT FORMAT (follow exactly — this is machine-parsed):
+
+<FILE: filename.ext>
+<EXPLANATION>
+Short explanation of what this file does
+</EXPLANATION>
+<CODE>
+full working code here
+</CODE>
+</FILE>
+
+CRITICAL FORMAT RULES:
+- Start EVERY file block with <FILE: filename> on its own line
+- End EVERY file block with </FILE> on its own line
+- filename must exactly match the task's specified filename
+- Output ALL files listed. Do not skip any.
+- Output files in the same order as the task list.
+- Do NOT write anything outside <FILE> blocks. No preamble. No summary.
+- Do NOT use markdown, backticks, or code fences anywhere.
+
+CODE QUALITY RULES:
+- Every file must be complete and runnable without modification
+- No TODOs or placeholders
+- All backend imports must be valid (e.g. express, cors) and assume they are in package.json
+- Backend files (.js) MUST use require() and module.exports. NEVER put React code in a .js file!
+- React files (.jsx) MUST use import/export functional components with hooks. NEVER put backend logic in a .jsx file!
+- Do NOT mix up filenames. Double check you are writing the correct code for the correct <FILE> tag.
+- Include proper error handling in all files
+- Use consistent coding style across all files
 
 FULL PROJECT PLAN:
-${plan.map((t, i) => `${i + 1}. ${t.task}`).join("\n")}
+${taskList}
 
-YOUR TASK (${index + 1} of ${total}):
-${task}
+FILES TO GENERATE:
+${fileList}
 
-ASSUMPTION: Other tasks handled separately.
-
-Start directly with code.
-If output is not pure code, return nothing.
+Begin output now.
+First line must be: <FILE: ${extractFilename(plan[0].task)}>
 `;
 }
 
-async function executorAgent(task, plan, prompt, index, total) {
-    console.log("⚙️ Executing task:", task);
+// ── Main Executor Function ──
 
-    const finalPrompt = buildExecutorPrompt(plan, task, index, total);
+async function executorAgent(tasks) {
+    log.step("EXECUTOR", `Started (BATCH MODE) — ${tasks.length} tasks`);
 
-    const aiResponse = await callLocalAI(finalPrompt);
+    const prompt = buildBatchExecutorPrompt(tasks);
 
-    const { code, explanation } = extractCodeAndExplanation(aiResponse);
+    log.ai("EXECUTOR", "Sending batch request to AI...");
 
-    return { code, explanation };
+    const raw = await callAI(prompt);
+
+    if (!raw || raw.trim().length === 0) {
+        log.error("EXECUTOR", "AI returned empty response");
+        return [];
+    }
+
+    log.ai("EXECUTOR", `Response received (${raw.length} chars)`);
+
+    const files = parseBatchOutput(raw);
+
+    log.success("EXECUTOR", `Parsed ${files.length} files: [${files.map(f => f.filename).join(", ")}]`);
+
+    if (!files.length) {
+        log.error("EXECUTOR", "No files parsed — output format might be wrong");
+    }
+
+    return files;
 }
 
 module.exports = executorAgent;
