@@ -19,19 +19,14 @@ function ensureDir(filePath) {
 // ── Resolve output path based on file extension and path ──
 
 function resolvePath(projectName, filename) {
-    const isFrontend = 
-        filename.endsWith(".jsx") || 
-        filename.endsWith(".css") || 
-        filename.includes("components/") || 
-        filename.includes("pages/") || 
-        filename === "App.js" || 
-        filename === "index.js" ||
-        filename.includes("src/");
+    let type = resolveFileType(filename);
+    
+    // Strip frontend/ or backend/ prefix if the AI included it
+    let cleanFilename = filename;
+    if (filename.startsWith("frontend/")) cleanFilename = filename.replace("frontend/", "");
+    if (filename.startsWith("backend/")) cleanFilename = filename.replace("backend/", "");
 
-    if (isFrontend) {
-        return path.join(BASE, projectName, "frontend", filename);
-    }
-    return path.join(BASE, projectName, "backend", filename);
+    return path.join(BASE, projectName, type, cleanFilename);
 }
 
 // ── Save a generated code file ──
@@ -60,4 +55,52 @@ function saveDocs(projectName, file) {
     log.save("FILE", `Docs → ${docPath}`);
 }
 
-module.exports = { saveFile, saveDocs };
+// ── Determine file type for database storage ──
+
+function resolveFileType(filename) {
+    if (filename.startsWith("frontend/") || filename.endsWith(".html") || filename.endsWith(".css") || filename.includes("frontend")) {
+        return "frontend";
+    }
+    return "backend";
+}
+// ── Generate package.json for Frontend and Backend ──
+
+function createPackageJsons(projectName, files) {
+    const backendDeps = new Set(["express", "cors", "dotenv"]);
+    let hasFrontend = false;
+
+    // Scan for dependencies and frontend existence
+    files.forEach(f => {
+        const type = resolveFileType(f.filename);
+        if (type === "frontend") hasFrontend = true;
+        if (type === "backend" && f.code) {
+            const requires = f.code.match(/require\(['"]([^./][^'"]*)['"]\)/g) || [];
+            requires.forEach(r => {
+                const mod = r.match(/require\(['"]([^'"]+)['"]\)/);
+                if (mod && mod[1] && !mod[1].startsWith(".") && !mod[1].startsWith("node:")) {
+                    backendDeps.add(mod[1]);
+                }
+            });
+        }
+    });
+
+    // 1. Write Backend package.json
+    const backendDir = path.join(BASE, projectName, "backend");
+    ensureDir(path.join(backendDir, "package.json"));
+    
+    const backendDepObj = {};
+    backendDeps.forEach(d => { backendDepObj[d] = "latest"; });
+
+    const backendPkg = {
+        name: `${projectName}-backend`,
+        version: "1.0.0",
+        main: "server.js",
+        scripts: { start: "node server.js", dev: "nodemon server.js" },
+        dependencies: backendDepObj
+    };
+    fs.writeFileSync(path.join(backendDir, "package.json"), JSON.stringify(backendPkg, null, 2));
+
+    // We no longer write frontend package.json because we are using Vanilla HTML/JS.
+}
+
+module.exports = { saveFile, saveDocs, resolveFileType, createPackageJsons };

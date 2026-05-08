@@ -5,7 +5,7 @@
 // Uses same <FILE> format so parser can re-parse
 // ─────────────────────────────────────────────
 
-const callAI = require("../services/aiservice");
+const { callAI } = require("../services/aiRouter");
 const { parseBatchOutput } = require("../utils/parser");
 const log = require("../utils/logger");
 
@@ -54,23 +54,15 @@ function validateFiles(tasks, files) {
         }
     });
 
-    // Check: React files should have JSX return
-    files.forEach(file => {
-        if (file.filename.endsWith(".jsx")) {
-            const hasReturn = file.code.includes("return");
-            const hasJSXOpen = file.code.includes("<");
-
-            if (!hasReturn || !hasJSXOpen) {
-                issues.push(`${file.filename} — missing JSX return statement`);
-            }
-        }
-    });
+    // Check: Backend API Routing Mismatches
+    // We expect fetch calls to match the route definitions, but static analysis is hard.
+    // We will rely on AI for deep verification.
 
     // Check: did executor miss any planned files?
     const generatedNames = files.map(f => f.filename.toLowerCase());
 
     tasks.forEach(task => {
-        const match = task.task.match(/[\w\-/]+\.(js|jsx)/i);
+        const match = task.task.match(/[\w\-/]+\.(js|html|css)/i);
 
         if (match) {
             const expected = match[0].toLowerCase();
@@ -109,7 +101,8 @@ YOUR TASK:
 - Keep the same file structure — do not add or remove files
 - Make every file complete and production-ready
 - Use require() and module.exports for backend .js files
-- Use import/export for React .jsx files
+- Ensure all frontend files (.html, .css, .js) use standard vanilla syntax
+- Ensure the frontend fetch URLs exactly match the backend Express routes
 
 OUTPUT FORMAT (follow EXACTLY — this is machine-parsed):
 
@@ -164,7 +157,7 @@ async function reviewerAgent(tasks, files) {
 
     const reviewPrompt = buildReviewPrompt(files, issues);
 
-    const raw = await callAI(reviewPrompt);
+    const raw = await callAI(reviewPrompt, { task: "review" });
 
     if (!raw || raw.trim().length === 0) {
         log.error("REVIEWER", "AI returned empty — keeping original code");

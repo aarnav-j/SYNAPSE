@@ -4,32 +4,35 @@
 // Uses <FILE> tag format for machine parsing
 // ─────────────────────────────────────────────
 
-const callAI = require("../services/aiservice");
+const { callAI } = require("../services/aiRouter");
 const { parseBatchOutput } = require("../utils/parser");
 const log = require("../utils/logger");
 
-// ── Extract filename from task text ──
-
-function extractFilename(task) {
-    const match = task.match(/[\w/]+\.(js|jsx)/i);
-    return match ? match[0] : "unknown.js";
-}
-
-// ── Build the batch prompt for all tasks ──
+// ── Build Batch Prompt ──
 
 function buildBatchExecutorPrompt(plan) {
     log.step("EXECUTOR", "Building batch prompt...");
 
-    const taskList = plan.map((t, i) => `${i + 1}. ${t.task}`).join("\n");
-    const fileList = plan.map((t, i) => `${i + 1}. ${extractFilename(t.task)}`).join("\n");
+    let taskList = "";
+    let fileList = "";
+
+    plan.forEach((p) => {
+        taskList += `[FILE: ${p.filename}]\nTASK: ${p.task}\n\n`;
+        fileList += `- ${p.filename}\n`;
+    });
 
     return `
 You are a code generation engine. You generate complete source code for multiple files in one response.
 
-TECH STACK:
-- Backend files (.js without .jsx): Node.js and Express only
-- Frontend files (.jsx): React functional components only
-- No TypeScript. No PHP. No Python. No class components.
+RULES:
+1. STRICT QUALITY: Output MUST be perfectly working code. Absolutely NO syntax errors, NO logical errors, NO missing variables, NO missing routes, and NO missing files.
+2. NO PLACEHOLDERS: Do NOT use placeholders, "TODO", or "insert code here". Implement every single line of logic perfectly.
+3. Use Node.js + Express for backend files (.js).
+4. Use Vanilla HTML, CSS, and JavaScript for frontend files (.html, .css, .js). DO NOT USE REACT.
+5. In your Express \`server.js\`, you MUST serve the frontend folder statically using: \`app.use(express.static(require('path').join(__dirname, '../frontend')));\`
+   For that you have to import path module at the beginning of server.js as: \`const path = require('path');\`
+6. The frontend JavaScript must use \`fetch('/api/...')\` or \`fetch('/...')\` depending on how the backend routes are defined. Ensure the frontend fetch URLs EXACTLY match the backend Express routes.
+7. Wrap each file in exactly this format:
 
 OUTPUT FORMAT (follow exactly — this is machine-parsed):
 
@@ -55,9 +58,9 @@ CODE QUALITY RULES:
 - Every file must be complete and runnable without modification
 - No TODOs or placeholders
 - All backend imports must be valid (e.g. express, cors) and assume they are in package.json
-- Backend files (.js) MUST use require() and module.exports. NEVER put React code in a .js file!
-- React files (.jsx) MUST use import/export functional components with hooks. NEVER put backend logic in a .jsx file!
-- Do NOT mix up filenames. Double check you are writing the correct code for the correct <FILE> tag.
+- Backend files (.js) MUST use require() and module.exports.
+- Frontend files MUST be standard HTML, CSS, and Vanilla JS.
+- Do NOT mix up filenames. Double check you are writing the correct code for the correct <FILE: name> tag.
 - Include proper error handling in all files
 - Use consistent coding style across all files
 
@@ -68,7 +71,7 @@ FILES TO GENERATE:
 ${fileList}
 
 Begin output now.
-First line must be: <FILE: ${extractFilename(plan[0].task)}>
+First line must be: <FILE: ${plan[0].filename}>
 `;
 }
 
@@ -81,7 +84,7 @@ async function executorAgent(tasks) {
 
     log.ai("EXECUTOR", "Sending batch request to AI...");
 
-    const raw = await callAI(prompt);
+    const raw = await callAI(prompt, { task: "execute" });
 
     if (!raw || raw.trim().length === 0) {
         log.error("EXECUTOR", "AI returned empty response");

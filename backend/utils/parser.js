@@ -11,7 +11,7 @@ function parseBatchOutput(raw) {
 
     // ── Primary regex: full <FILE> <EXPLANATION> <CODE> format ──
 
-    const fullRegex = /<FILE:\s*([\w\-./]+\.(js|jsx))\s*>\s*<EXPLANATION>([\s\S]*?)<\/EXPLANATION>\s*<CODE>([\s\S]*?)<\/CODE>\s*<\/FILE>/gi;
+    const fullRegex = /<FILE:\s*([\w\-./]+\.(js|jsx|html|css|json))\s*>\s*<EXPLANATION>([\s\S]*?)<\/EXPLANATION>\s*<CODE>([\s\S]*?)<\/CODE>\s*<\/FILE>/gi;
 
     let match;
 
@@ -31,7 +31,7 @@ function parseBatchOutput(raw) {
 
     // ── Fallback regex: <FILE> <CODE> only (no explanation) ──
 
-    const codeOnlyRegex = /<FILE:\s*([\w\-./]+\.(js|jsx))\s*>\s*<CODE>([\s\S]*?)<\/CODE>\s*<\/FILE>/gi;
+    const codeOnlyRegex = /<FILE:\s*([\w\-./]+\.(js|jsx|html|css|json))\s*>\s*<CODE>([\s\S]*?)<\/CODE>\s*<\/FILE>/gi;
 
     while ((match = codeOnlyRegex.exec(raw)) !== null) {
         const code = match[3].trim();
@@ -49,7 +49,7 @@ function parseBatchOutput(raw) {
 
     // ── Last resort: <FILE> with any content between tags ──
 
-    const looseRegex = /<FILE:\s*([\w\-./]+\.(js|jsx))\s*>([\s\S]*?)<\/FILE>/gi;
+    const looseRegex = /<FILE:\s*([\w\-./]+\.(js|jsx|html|css|json))\s*>([\s\S]*?)<\/FILE>/gi;
 
     while ((match = looseRegex.exec(raw)) !== null) {
         let content = match[3].trim();

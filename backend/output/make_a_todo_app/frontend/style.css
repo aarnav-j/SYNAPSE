@@ -1,0 +1,124 @@
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(to bottom, #ff69b4, #ffe6cc);
+  background-attachment: fixed;
+}
+
+#todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 50%;
+  margin: 40px auto;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 2s;
+}
+
+#todo-list li {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f7f7f7;
+  transition: background-color 0.5s;
+}
+
+#todo-list li:hover {
+  background-color: #e7e7e7;
+}
+
+#todo-list li:last-child {
+  border-bottom: none;
+}
+
+#todo-form {
+  width: 50%;
+  margin: 20px auto;
+  background-color: #fff;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  animation: fadeIn 2s;
+}
+
+#todo-form input {
+  padding: 10px;
+  margin-right: 10px;
+  border: 1px solid #ccc;
+  width: 45%;
+  border-radius: 5px;
+}
+
+#submit-btn {
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  animation: pulse 2s infinite;
+}
+
+#submit-btn:hover {
+  background-color: #3e8e41;
+}
+
+.edit-btn {
+  padding: 5px 10px;
+  background-color: #03A9F4;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  animation: pulse 2s infinite;
+}
+
+.edit-btn:hover {
+  background-color: #039BE5;
+}
+
+.delete-btn {
+  padding: 5px 10px;
+  background-color: #E91E63;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  animation: pulse 2s infinite;
+}
+
+.delete-btn:hover {
+  background-color: #C62828;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+  animation: fadeIn 2s;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}

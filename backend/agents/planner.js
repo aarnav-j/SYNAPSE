@@ -4,7 +4,7 @@
 // Each task = exactly one file with filename
 // ─────────────────────────────────────────────
 
-const callAI = require("../services/aiservice");
+const { callAI } = require("../services/aiRouter");
 const log = require("../utils/logger");
 
 // ── Parse numbered list into task objects ──
@@ -38,17 +38,17 @@ You are a code task planner. Output ONLY a numbered list of coding tasks.
 
 TECH STACK (STRICT — never deviate):
 - Backend: Node.js with Express only
-- Frontend: React with .jsx files only
-- NEVER use: PHP, Python, Laravel, Django, Flask, Java, TypeScript
+- Frontend: Vanilla HTML, CSS, and JavaScript only
+- NEVER use: React, Vue, Angular, JSX, TypeScript, PHP, Python,  Laravel, Django, Flask, Java, TypeScript
 
 FILE RULES (never break):
 - Each task must produce EXACTLY one file
 - Backend files MUST use .js extension
-- Frontend (React) files MUST use .jsx extension (e.g. App.jsx, index.jsx). NEVER use .js for React.
+- Frontend files MUST be exactly: frontend/index.html, frontend/style.css, and frontend/app.js. NEVER use .jsx.
 - Each task must include the exact filename with extension
 - Each task must be 12 words or fewer
 - Output 6 to 8 tasks total — enough to cover a full working project
-- Tasks must cover: entry point, routes, middleware, data layer, and UI components
+- Tasks must cover: backend entry point (server.js), routes, frontend HTML, CSS, and JS
 
 FORMAT RULES (never break):
 - Every line starts with: number, period, space → "1. "
@@ -78,7 +78,7 @@ Now output the task list for this project. Follow ALL rules above exactly.
 Project: ${prompt}
 `;
 
-    const raw = await callAI(plannerPrompt);
+    const raw = await callAI(plannerPrompt, { task: "plan" });
 
     log.ai("PLANNER", "Raw output received");
 
