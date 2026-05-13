@@ -1,0 +1,115 @@
+{
+  "id": "run_20260514_034150_f9p7",
+  "prompt": "Build a real-time full-stack chat application using Node.js, Express, Socket.IO, and vanilla HTML/CSS/JavaScript.\n\nThe application should allow multiple users to join a common chat room and exchange messages instantly in real time.\n\nFrontend Requirements:\n\n* Use ONLY:\n\n  * index.html\n  * style.css\n  * app.js\n* Create a modern responsive chat UI.\n* Include:\n\n  * username input section\n  * join chat button\n  * chat message area\n  * online status/header\n  * message input field\n  * send button\n* Messages should appear instantly without page refresh.\n* Differentiate own messages and other users' messages visually.\n* Auto-scroll to latest message.\n* Show timestamps beside messages.\n* Show join/leave system notifications.\n\nBackend Requirements:\n\n* Use Node.js + Express + Socket.IO only.\n* Backend should:\n\n  * create server\n  * handle socket connections\n  * broadcast messages\n  * track connected users\n  * emit join/leave events\n  * support multiple clients simultaneously\n* Use port 3000.\n\nFunctional Requirements:\n\n* When user enters username and joins:\n\n  * establish socket connection\n  * notify all users\n* When message is sent:\n\n  * emit to server\n  * broadcast to all connected users\n* Prevent empty messages.\n* Handle disconnect events properly.\n\nArchitecture Rules:\n\n* Frontend and backend must be separated cleanly.\n* Keep logic modular.\n* Do not generate unnecessary files.\n* No React.\n* No Vite.\n* No database.\n* No authentication system.\n* No external UI libraries.\n\nExpected Folder Structure:\nproject/\n├── backend/\n│   ├── server.js\n│   └── package.json\n├── frontend/\n│   ├── index.html\n│   ├── style.css\n│   └── app.js\n\nExtra Requirements:\n\n* Automatically serve frontend using Express static middleware.\n* Frontend should open directly on:\n  [http://localhost:3000](http://localhost:3000)\n* Add proper console logs throughout backend for debugging:\n\n  * user connected\n  * user disconnected\n  * message received\n  * server started\n* Code must be fully working without placeholders or TODO comments.\n* Generate clean readable production-style code.",
+  "tasks": [
+    {
+      "step": 1,
+      "task": "Create backend/utils/chatManager.js — Manages in-memory state for connected users and chat messages. Provides methods for adding/removing users and messages.",
+      "filename": "backend/utils/chatManager.js",
+      "purpose": "Manages in-memory state for connected users and chat messages. Provides methods for adding/removing users and messages.",
+      "dependsOn": []
+    },
+    {
+      "step": 2,
+      "task": "Create backend/socketHandler.js — Encapsulates all Socket.IO event handling logic, including user connection/disconnection, message reception, and broadcasting. [imports: backend/utils/chatManager.js]",
+      "filename": "backend/socketHandler.js",
+      "purpose": "Encapsulates all Socket.IO event handling logic, including user connection/disconnection, message reception, and broadcasting.",
+      "dependsOn": [
+        "backend/utils/chatManager.js"
+      ]
+    },
+    {
+      "step": 3,
+      "task": "Create backend/app.js — Configures the Express application, sets up static file serving for the frontend, and includes a basic error handler.",
+      "filename": "backend/app.js",
+      "purpose": "Configures the Express application, sets up static file serving for the frontend, and includes a basic error handler.",
+      "dependsOn": []
+    },
+    {
+      "step": 4,
+      "task": "Create backend/server.js — Main entry point. Creates HTTP server, integrates Express app and Socket.IO, and starts listening on the specified port. [imports: backend/app.js, backend/socketHandler.js]",
+      "filename": "backend/server.js",
+      "purpose": "Main entry point. Creates HTTP server, integrates Express app and Socket.IO, and starts listening on the specified port.",
+      "dependsOn": [
+        "backend/app.js",
+        "backend/socketHandler.js"
+      ]
+    },
+    {
+      "step": 5,
+      "task": "Create server.js — Express app — cors, json, static serving, route mounting, error handler, port 3000",
+      "filename": "server.js",
+      "purpose": "Express app — cors, json, static serving, route mounting, error handler, port 3000",
+      "dependsOn": []
+    },
+    {
+      "step": 6,
+      "task": "Create frontend/index.html — Defines the main HTML structure for the chat application, including UI elements for user input, message display, and controls.",
+      "filename": "frontend/index.html",
+      "purpose": "Defines the main HTML structure for the chat application, including UI elements for user input, message display, and controls.",
+      "dependsOn": []
+    },
+    {
+      "step": 7,
+      "task": "Create frontend/style.css — Provides CSS rules to style the chat application's user interface, ensuring a modern and responsive design.",
+      "filename": "frontend/style.css",
+      "purpose": "Provides CSS rules to style the chat application's user interface, ensuring a modern and responsive design.",
+      "dependsOn": []
+    },
+    {
+      "step": 8,
+      "task": "Create frontend/app.js — Implements client-side JavaScript logic for connecting to Socket.IO, handling user interactions, sending/receiving messages, and dynamically updating the chat UI.",
+      "filename": "frontend/app.js",
+      "purpose": "Implements client-side JavaScript logic for connecting to Socket.IO, handling user interactions, sending/receiving messages, and dynamically updating the chat UI.",
+      "dependsOn": []
+    }
+  ],
+  "files": [
+    {
+      "filename": "backend/utils/chatManager.js",
+      "explanation": "This module manages the in-memory state of connected users and chat messages, providing methods for adding and removing users and messages. It exports an object with methods for user and message management."
+    },
+    {
+      "filename": "backend/socketHandler.js",
+      "explanation": "This module encapsulates all Socket.IO event handling logic, including user connection/disconnection, message reception, and broadcasting. It imports the chatManager module to manage the in-memory state of connected users and chat messages."
+    },
+    {
+      "filename": "backend/app.js",
+      "explanation": "This module configures the Express application, sets up static file serving for the frontend, and includes a basic error handler."
+    },
+    {
+      "filename": "backend/server.js",
+      "explanation": "This module creates an HTTP server, integrates the Express app and Socket.IO, and starts listening on the specified port."
+    },
+    {
+      "filename": "server.js",
+      "explanation": "This module creates an Express app, sets up cors, json, and static serving, mounts routes, and includes a basic error handler."
+    },
+    {
+      "filename": "frontend/index.html",
+      "explanation": "This file defines the main HTML structure for the chat application, including UI elements for user input, message display, and controls. It serves as the entry point for the application, linking to the CSS stylesheet and JavaScript file."
+    },
+    {
+      "filename": "frontend/style.css",
+      "explanation": "This file provides CSS rules to style the chat application's user interface, ensuring a modern and responsive design. It defines the visual layout and appearance of the application's elements."
+    },
+    {
+      "filename": "frontend/app.js",
+      "explanation": "This file implements client-side JavaScript logic for connecting to the chat API, handling user interactions, sending/receiving messages, and dynamically updating the chat UI. It uses the fetch API to make requests to the backend and updates the DOM accordingly."
+    },
+    {
+      "filename": "README.md",
+      "explanation": "Project documentation generated by SYNAPSE."
+    },
+    {
+      "filename": "backend/package.json",
+      "explanation": "Auto-generated package.json with dependencies scanned from source code."
+    }
+  ],
+  "status": "COMPLETED",
+  "errors": [
+    "backend/server.js: Missing module.exports",
+    "frontend/app.js: References missing DOM ID: #loading"
+  ],
+  "timestamp": "14/5/2026, 3:41:57 am"
+}

@@ -25,6 +25,7 @@ function resolvePath(projectName, filename) {
     let cleanFilename = filename;
     if (filename.startsWith("frontend/")) cleanFilename = filename.replace("frontend/", "");
     if (filename.startsWith("backend/")) cleanFilename = filename.replace("backend/", "");
+    if (filename.startsWith("docs/")) cleanFilename = filename.replace("docs/", "");
 
     return path.join(BASE, projectName, type, cleanFilename);
 }
@@ -32,6 +33,9 @@ function resolvePath(projectName, filename) {
 // ── Save a generated code file ──
 
 function saveFile(projectName, file) {
+    // Never save node_modules or package-lock files
+    if (file.filename.includes("node_modules") || file.filename.includes("package-lock")) return;
+
     const filePath = resolvePath(projectName, file.filename);
 
     ensureDir(filePath);
@@ -58,6 +62,7 @@ function saveDocs(projectName, file) {
 // ── Determine file type for database storage ──
 
 function resolveFileType(filename) {
+    if (filename.endsWith(".md") || filename.startsWith("docs/")) return "docs";
     if (filename.startsWith("frontend/") || filename.endsWith(".html") || filename.endsWith(".css") || filename.includes("frontend")) {
         return "frontend";
     }
@@ -98,9 +103,15 @@ function createPackageJsons(projectName, files) {
         scripts: { start: "node server.js", dev: "nodemon server.js" },
         dependencies: backendDepObj
     };
-    fs.writeFileSync(path.join(backendDir, "package.json"), JSON.stringify(backendPkg, null, 2));
+    const pkgJsonString = JSON.stringify(backendPkg, null, 2);
+    fs.writeFileSync(path.join(backendDir, "package.json"), pkgJsonString);
 
-    // We no longer write frontend package.json because we are using Vanilla HTML/JS.
+    // Return the generated file so queue can save it to DB
+    return {
+        filename: "backend/package.json",
+        explanation: "Auto-generated package.json with dependencies scanned from source code.",
+        code: pkgJsonString
+    };
 }
 
 module.exports = { saveFile, saveDocs, resolveFileType, createPackageJsons };

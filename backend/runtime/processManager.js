@@ -174,7 +174,7 @@ async function runProject(projectName) {
 
     const proc = spawn("node", [entryFile], {
         cwd: backendDir,
-        shell: true,
+        shell: false,
         env: { ...process.env, PORT: "3000" }
     });
 

@@ -1,9 +1,10 @@
 // ─────────────────────────────────────────────
-// SYNAPSE — AI Router (Multi-LLM Orchestrator)
-// Routes AI calls to the right provider:
-//   Groq  → Primary (80-90% of calls)
-//   Gemini → Reserved (planning + complex only)
-//   NIM   → Fallback (when Groq fails)
+// SYNAPSE — AI Router (Enhanced Multi-LLM Orchestrator)
+// Routes AI calls to the right provider with token tracking
+//   Gemini → Planning + Vision (most capable)
+//   Groq   → Primary for execution/review/debug (fast)
+//   NIM    → Fallback (when Groq fails)
+// Token-efficient: passes task type for budget allocation
 // ─────────────────────────────────────────────
 
 const callGemini = require("./aiservice");
@@ -31,6 +32,21 @@ const PROVIDERS = {
     nim:    callNIM
 };
 
+// ── Token Usage Tracker ──
+// Tracks cumulative token usage per session for monitoring
+
+const tokenTracker = {
+    totalCalls: 0,
+    byTask: {},
+    log(task) {
+        this.totalCalls++;
+        this.byTask[task] = (this.byTask[task] || 0) + 1;
+    },
+    getSummary() {
+        return `Total API calls: ${this.totalCalls} | By task: ${JSON.stringify(this.byTask)}`;
+    }
+};
+
 // ── Call a specific provider ──
 
 async function callProvider(providerName, prompt, options) {
@@ -49,16 +65,19 @@ async function callProvider(providerName, prompt, options) {
 
 async function callAI(prompt, options = {}) {
     const task = options.task || "execute";
-    const route = ROUTES[task] || ROUTES.execute;
+    const route = { ...ROUTES[task] } || { ...ROUTES.execute };
+
+    // Track this call
+    tokenTracker.log(task);
 
     if (options.image) {
-        // If image is present, ONLY Gemini supports vision in our stack right now
+        // If image is present, ONLY Gemini supports vision in our stack
         route.primary = "gemini";
         route.fallback1 = null;
         route.fallback2 = null;
     }
 
-    log.info("ROUTER", `Task: "${task}" → Primary: ${route.primary}`);
+    log.info("ROUTER", `Task: "${task}" → Primary: ${route.primary} | ${tokenTracker.getSummary()}`);
 
     // Try primary
     let result = await callProvider(route.primary, prompt, options);

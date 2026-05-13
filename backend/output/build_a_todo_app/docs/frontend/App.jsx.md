@@ -1,3 +1,0 @@
-# frontend/App.jsx
-
-

@@ -24,6 +24,11 @@ export async function getProjectSteps(projectId) {
   return res.json();
 }
 
+export async function getDebugSessions(projectId) {
+  const res = await fetch(`${API}/debug/sessions/${projectId}`);
+  return res.json();
+}
+
 export async function startDebugSession(projectId) {
   const res = await fetch(`${API}/debug/${projectId}`, { method: "POST" });
   return res.json();

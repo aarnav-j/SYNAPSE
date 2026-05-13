@@ -279,6 +279,32 @@ async function boot() {
 
     // ── Debug Routes ──
 
+    // GET /debug/sessions/:projectId — Get all debug sessions for a project (latest first)
+    app.get("/debug/sessions/:projectId", async (req, res) => {
+        try {
+            const sessions = await db.getDebugSessionsByProjectId(req.params.projectId);
+            
+            // For the latest active session, also load its chat history
+            let latestSession = null;
+            let history = [];
+            
+            if (sessions.length > 0) {
+                const active = sessions.find(s => s.status === 'active') || sessions[0];
+                latestSession = active;
+                history = await db.getChatHistory(active.id);
+            }
+
+            res.json({
+                success: true,
+                sessions,
+                latestSession,
+                history
+            });
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
     // POST /debug/:projectId — Start a new debug session
     app.post("/debug/:projectId", async (req, res) => {
         try {
@@ -380,25 +406,54 @@ async function boot() {
         }
     });
 
-    // GET /export/download/:projectId — Download the ZIP file directly
-    app.get("/export/download/:projectId", authMiddleware, async (req, res) => {
+    // GET /export/download-project/:projectId — Download whole project (no node_modules)
+    app.get("/export/download-project/:projectId", async (req, res) => {
         try {
-            const projects = await db.query(
-                `SELECT project_name FROM projects WHERE id = ?`,
-                [req.params.projectId]
-            );
+            const projects = await db.query(`SELECT project_name FROM projects WHERE id = ?`, [req.params.projectId]);
+            if (!projects || projects.length === 0) return res.status(404).json({ error: "Project not found" });
 
-            if (!projects || projects.length === 0) {
-                return res.status(404).json({ error: "Project not found" });
-            }
+            const projectName = projects[0].project_name;
+            const projectPath = path.join(__dirname, "output", projectName);
+            if (!require("fs").existsSync(projectPath)) return res.status(404).json({ error: "Project directory not found" });
 
-            const zipPath = path.join(__dirname, "output", projects[0].project_name, "export", `${projects[0].project_name}.zip`);
+            res.attachment(`${projectName}.zip`);
+            const archiver = require("archiver");
+            const archive = archiver("zip", { zlib: { level: 9 } });
 
-            if (!require("fs").existsSync(zipPath)) {
-                return res.status(404).json({ error: "Export not found. Run POST /export/:projectId first." });
-            }
+            archive.on("error", err => res.status(500).send({ error: err.message }));
+            archive.pipe(res);
 
-            res.download(zipPath);
+            archive.glob("**/*", {
+                cwd: projectPath,
+                ignore: ["**/node_modules/**", "**/export/**", "package-lock.json"]
+            });
+
+            archive.finalize();
+        } catch (err) {
+            res.status(500).json({ error: err.message });
+        }
+    });
+
+    // GET /export/download-docs/:projectId — Download ONLY docs folder
+    app.get("/export/download-docs/:projectId", async (req, res) => {
+        try {
+            const projects = await db.query(`SELECT project_name FROM projects WHERE id = ?`, [req.params.projectId]);
+            if (!projects || projects.length === 0) return res.status(404).json({ error: "Project not found" });
+
+            const projectName = projects[0].project_name;
+            const docsPath = path.join(__dirname, "output", projectName, "docs");
+            if (!require("fs").existsSync(docsPath)) return res.status(404).json({ error: "Docs directory not found" });
+
+            res.attachment(`${projectName}_docs.zip`);
+            const archiver = require("archiver");
+            const archive = archiver("zip", { zlib: { level: 9 } });
+
+            archive.on("error", err => res.status(500).send({ error: err.message }));
+            archive.pipe(res);
+
+            archive.directory(docsPath, false);
+
+            archive.finalize();
         } catch (err) {
             res.status(500).json({ error: err.message });
         }

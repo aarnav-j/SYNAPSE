@@ -14,8 +14,49 @@ import {
   restartProject,
   connectLogStream,
   getRuntimeStatus,
+  getDebugSessions,
 } from "../api";
 import "./Dashboard.css";
+
+const renderTerminalMessage = (message) => {
+  if (!message) return null;
+  // Match either "localhost:1234", "http://localhost:1234", or "port 1234"
+  const urlRegex = /((?:https?:\/\/)?localhost:\d+|port\s+\d+)/gi;
+  const parts = message.split(urlRegex);
+  
+  return parts.map((part, i) => {
+    const match = part.match(urlRegex);
+    if (match) {
+      let url = part;
+      let displayText = part;
+
+      if (part.toLowerCase().startsWith('port')) {
+        const portNum = part.split(/\s+/)[1];
+        url = `http://localhost:${portNum}`;
+      } else if (!part.startsWith('http')) {
+        url = `http://${part}`;
+      }
+
+      return (
+        <a 
+          key={i} 
+          href={url} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="terminal-link"
+          title="Click to open in browser"
+          onClick={(e) => {
+            // Optional: If you strictly want only Ctrl+Click
+            // if (!e.ctrlKey && !e.metaKey) e.preventDefault();
+          }}
+        >
+          {displayText}
+        </a>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -180,6 +221,16 @@ export default function Dashboard() {
     setErrorSuggestion(null);
   };
 
+  const handleDownloadProject = () => {
+    if (!activeProject) return;
+    window.open(`http://localhost:3005/export/download-project/${activeProject.id}`, '_blank');
+  };
+
+  const handleDownloadDocs = () => {
+    if (!activeProject) return;
+    window.open(`http://localhost:3005/export/download-docs/${activeProject.id}`, '_blank');
+  };
+
   // ── Data Fetching ──
   const fetchHistory = async () => {
     try {
@@ -224,11 +275,20 @@ export default function Dashboard() {
         setActiveFile(data.files[0]);
         setEditorContent(data.files[0].content || "");
       }
+      
       // Check runtime status
       const status = await getRuntimeStatus(project.id);
       setRuntimeStatus(status.status || "stopped");
+      
       // Connect log stream
       connectLogs(project.id);
+
+      // Load existing debug session if available
+      const debugData = await getDebugSessions(project.id);
+      if (debugData.success && debugData.latestSession) {
+        setDebugSessionId(debugData.latestSession.id);
+        setDebugChat(debugData.history || []);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -487,6 +547,14 @@ export default function Dashboard() {
                 {!debugSessionId && (
                   <button className="btn-runtime btn-debug" onClick={handleStartDebug}>🐛 Debug</button>
                 )}
+                <div className="download-group">
+                  <button className="btn-runtime btn-download" onClick={handleDownloadDocs} title="Download Documentation">
+                    ⬇️ Docs
+                  </button>
+                  <button className="btn-runtime btn-download" onClick={handleDownloadProject} title="Download Full Project (without node_modules)">
+                    ⬇️ Project
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -568,7 +636,7 @@ export default function Dashboard() {
                           terminalLogs.map((entry, i) => (
                             <div key={i} className={`terminal-line ${entry.type}`}>
                               <span className="terminal-time">{new Date(entry.timestamp).toLocaleTimeString()}</span>
-                              <span className="terminal-text">{entry.message}</span>
+                              <span className="terminal-text">{renderTerminalMessage(entry.message)}</span>
                             </div>
                           ))
                         )}

@@ -800,6 +800,37 @@
   white-space: nowrap;
 }
 
+.terminal-link {
+  color: #38bdf8;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.terminal-link:hover {
+  color: #7dd3fc;
+}
+
+.download-group {
+  display: flex;
+  gap: 8px;
+  margin-left: 12px;
+  border-left: 1px solid var(--border);
+  padding-left: 12px;
+}
+
+.btn-download {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-download:hover {
+  background: var(--border);
+  border-color: var(--accent);
+}
+
 .error-popup-actions {
   display: flex;
   gap: 8px;

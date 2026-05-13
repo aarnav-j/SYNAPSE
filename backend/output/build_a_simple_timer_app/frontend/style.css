@@ -1,0 +1,92 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #f1c40f;
+    --background-color: #f9f9f9;
+    --text-color: #333;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+nav {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 1em;
+    text-align: center;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2em;
+}
+
+section {
+    background-color: #fff;
+    padding: 1em;
+    border: 1px solid #ddd;
+    border-radius: 0.5em;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#timer-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#timer-list li {
+    padding: 0.5em;
+    border-bottom: 1px solid #ccc;
+}
+
+#timer-list li:last-child {
+    border-bottom: none;
+}
+
+#create-timer-form {
+    margin-top: 1em;
+}
+
+#create-timer-form input[type="number"] {
+    width: 100%;
+    height: 2em;
+    padding: 0.5em;
+    border: 1px solid #ccc;
+    border-radius: 0.5em;
+}
+
+#create-timer-form button[type="submit"] {
+    width: 100%;
+    height: 2em;
+    padding: 0.5em;
+    background-color: var(--primary-color);
+    color: #fff;
+    border: none;
+    border-radius: 0.5em;
+    cursor: pointer;
+}
+
+#create-timer-form button[type="submit"]:hover {
+    background-color: var(--secondary-color);
+}
+
+#create-timer-form button[type="submit"]:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1em;
+    }
+    section {
+        padding: 0.5em;
+    }
+}

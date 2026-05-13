@@ -61,7 +61,7 @@ async function callAI(prompt, options = {}, retries = 2) {
             config: {
                 temperature: 0.2,
                 topP: 0.9,
-                maxOutputTokens: 8192
+                maxOutputTokens: 65536
             }
         });
 

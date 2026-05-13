@@ -2,7 +2,7 @@
 // SYNAPSE — NVIDIA NIM Service (Fallback LLM)
 // OpenAI-compatible API pointed at NVIDIA's endpoint
 // Model: meta/llama-3.1-8b-instruct
-// Used when Groq is unavailable
+// Token-efficient: task-aware budgets
 // ─────────────────────────────────────────────
 
 const OpenAI = require("openai");
@@ -13,6 +13,16 @@ const nim = new OpenAI({
     baseURL: "https://integrate.api.nvidia.com/v1"
 });
 
+// ── Task-aware token budgets ──
+const TOKEN_BUDGETS = {
+    plan:     2000,
+    execute:  4096,    // NIM model has lower limit
+    review:   4096,
+    debug:    4096,
+    readme:   3000,
+    generate: 4096
+};
+
 // ── Delay helper ──
 
 function delay(ms) {
@@ -21,9 +31,12 @@ function delay(ms) {
 
 // ── Main NIM call with retry ──
 
-async function callNIM(prompt, retries = 1) {
+async function callNIM(prompt, options = {}, retries = 1) {
+    const task = options?.task || "generate";
+    const maxTokens = TOKEN_BUDGETS[task] || 3000;
+
     try {
-        log.ai("NIM", "Sending request to NVIDIA NIM (LLaMA 3.1 8B)...");
+        log.ai("NIM", `Sending request (task: ${task}, budget: ${maxTokens} tokens)...`);
 
         const response = await nim.chat.completions.create({
             model: "meta/llama-3.1-8b-instruct",
@@ -38,13 +51,14 @@ async function callNIM(prompt, retries = 1) {
                 }
             ],
             temperature: 0.3,
-            max_tokens: 4096,
+            max_tokens: maxTokens,
             top_p: 0.9
         });
 
         const text = response.choices[0]?.message?.content || "";
+        const usage = response.usage || {};
 
-        log.success("NIM", `Response received (${text.length} chars)`);
+        log.success("NIM", `Response: ${text.length} chars | Tokens: ${usage.prompt_tokens || "?"} in → ${usage.completion_tokens || "?"} out`);
 
         return text;
 
@@ -55,7 +69,7 @@ async function callNIM(prompt, retries = 1) {
             const waitTime = 2000;
             log.warn("NIM", `Retrying in ${waitTime / 1000}s... (${retries} retries left)`);
             await delay(waitTime);
-            return callNIM(prompt, retries - 1);
+            return callNIM(prompt, options, retries - 1);
         }
 
         log.error("NIM", "All retries exhausted — returning empty");

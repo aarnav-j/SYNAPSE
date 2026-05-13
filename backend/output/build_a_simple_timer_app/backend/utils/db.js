@@ -1,0 +1,1 @@
+This file initializes the SQLite database and creates the 'timers' table if it does not exist, providing a database instance for other modules to use. It exports the database instance.

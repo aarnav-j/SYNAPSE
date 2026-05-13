@@ -185,4 +185,4 @@ async function exportProject(projectId) {
     };
 }
 
-module.exports = { exportProject };
+module.exports = { exportProject, generateReadme, createZip, generatePackageJson };

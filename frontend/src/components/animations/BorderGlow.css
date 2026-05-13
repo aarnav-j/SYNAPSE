@@ -1,0 +1,57 @@
+.border-glow-card {
+  --edge-proximity: 0;
+  --cursor-angle: 0deg;
+
+  --dynamic-glow-1: var(--glow-color);
+  --dynamic-glow-2: var(--glow-color-10);
+  --dynamic-glow-3: var(--glow-color-20);
+  --dynamic-glow-4: var(--glow-color-30);
+  --dynamic-glow-5: var(--glow-color-40);
+  --dynamic-glow-6: var(--glow-color-50);
+  --dynamic-glow-7: var(--glow-color-60);
+
+  position: relative;
+  display: inline-block;
+  padding: var(--glow-padding);
+  border-radius: var(--border-radius);
+  background: var(--card-bg);
+  overflow: hidden;
+  z-index: 1;
+}
+
+.border-glow-inner {
+  position: relative;
+  z-index: 2;
+  border-radius: calc(var(--border-radius) * 0.9);
+  background: var(--card-bg);
+  height: 100%;
+}
+
+.edge-light {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  opacity: calc(var(--edge-proximity) / var(--edge-sensitivity));
+  transition: opacity 0.1s ease;
+
+  background:
+    conic-gradient(
+      from calc(var(--cursor-angle) - var(--cone-spread) * 1deg) at 50% 50%,
+      transparent 0deg,
+      var(--dynamic-glow-1) 2deg,
+      var(--dynamic-glow-2) 4deg,
+      var(--dynamic-glow-3) 6deg,
+      var(--dynamic-glow-4) 8deg,
+      var(--dynamic-glow-5) 10deg,
+      var(--dynamic-glow-6) 12deg,
+      var(--dynamic-glow-7) 14deg,
+      transparent calc(var(--cone-spread) * 2deg)
+    ),
+    var(--gradient-base);
+  background-blend-mode: screen;
+}
+
+.sweep-active .edge-light {
+  opacity: 1 !important;
+}

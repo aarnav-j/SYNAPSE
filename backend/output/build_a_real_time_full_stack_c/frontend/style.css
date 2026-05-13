@@ -1,0 +1,110 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #f1c40f;
+    --background-color: #f9f9f9;
+    --text-color: #333;
+    --font-family: 'Inter', sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+}
+
+nav {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 1em;
+    text-align: center;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2em;
+}
+
+#chat-log {
+    background-color: #fff;
+    padding: 1em;
+    border: 1px solid #ddd;
+    border-radius: 0.5em;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#message-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#message-list li {
+    padding: 0.5em;
+    border-bottom: 1px solid #ddd;
+}
+
+#message-list li:last-child {
+    border-bottom: none;
+}
+
+#input-form {
+    margin-top: 1em;
+}
+
+#message-form {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#message-input {
+    padding: 0.5em;
+    border: 1px solid #ddd;
+    border-radius: 0.5em;
+    width: 80%;
+}
+
+#message-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+button[type="submit"] {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 0.5em 1em;
+    border: none;
+    border-radius: 0.5em;
+    cursor: pointer;
+}
+
+button[type="submit"]:hover {
+    background-color: var(--secondary-color);
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1em;
+    }
+    
+    #chat-log {
+        padding: 0.5em;
+    }
+    
+    #message-list li {
+        padding: 0.2em;
+    }
+    
+    #input-form {
+        margin-top: 0.5em;
+    }
+    
+    #message-input {
+        width: 70%;
+    }
+}
