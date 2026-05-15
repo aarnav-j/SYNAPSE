@@ -1,0 +1,1 @@
+This file loads environment variables for the application configuration. It exports the environment variables as an object.

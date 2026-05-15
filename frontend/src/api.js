@@ -1,4 +1,4 @@
-const API = "http://localhost:3005";
+const API = "http://localhost:3001";
 
 export async function sendPrompt(prompt) {
   const res = await fetch(`${API}/prompt`, {

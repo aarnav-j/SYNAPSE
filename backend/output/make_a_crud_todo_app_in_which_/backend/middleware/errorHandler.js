@@ -1,0 +1,1 @@
+This file defines a centralized error handling middleware for the Express application. It catches and handles errors, returning a standardized error response.

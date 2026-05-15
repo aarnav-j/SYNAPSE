@@ -47,8 +47,8 @@ function parseBatchOutput(raw) {
 
     if (results.length > 0) return results;
 
-    // ── Fallback regex: <FILE> <CODE> only (no explanation) ──
-    const codeOnlyRegex = /<FILE:\s*([\w\-./]+\.(\w{1,5}))\s*>\s*<CODE>([\s\S]*?)<\/CODE>\s*<\/FILE>/gi;
+    // ── Fallback regex: <FILE> <CODE> (allows explanatory text before/after CODE) ──
+    const codeOnlyRegex = /<FILE:\s*([\w\-./]+\.(\w{1,5}))\s*>[\s\S]*?<CODE>([\s\S]*?)<\/CODE>[\s\S]*?<\/FILE>/gi;
 
     while ((match = codeOnlyRegex.exec(cleaned)) !== null) {
         const code = match[3].trim();

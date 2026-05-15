@@ -208,7 +208,7 @@ function injectMissing(plan) {
         injected.push({
             step: 0,
             file: "server.js",
-            purpose: "Express app — cors, json, static serving, route mounting, error handler, port 3000",
+            purpose: "Express app — cors, json, static serving, route mounting, error handler, start on process.env.PORT || 3000",
             dependsOn: []
         });
     }
@@ -290,7 +290,7 @@ PLANNING RULES:
    Correct order: utils → config → middleware → services → routes → server.js → frontend
 4. FRONTEND FILES ARE FIXED: frontend/index.html, frontend/style.css, frontend/app.js
    Never create components/, pages/, .jsx, .tsx
-5. server.js must: configure express, register middleware, mount routes, serve frontend statically, include global error handler, start server
+5. server.js must: configure express, register middleware, mount routes, serve frontend statically, include global error handler, start server on process.env.PORT || 3000
 6. API CONTRACT RULES: Every route file must define HTTP methods, paths, purpose
 7. SHARED LOGIC RULE: Reusable logic goes into utils/, services/, middleware/. Never duplicate logic across routes.
 8. TOKEN OPTIMIZATION: Keep descriptions short and precise. Do NOT explain concepts.
@@ -458,7 +458,7 @@ async function plannerAgent(prompt) {
         if (!taskContent.includes("server.js")) {
             tasks.push({
                 step: tasks.length + 1,
-                task: "Create server.js mounting all routes, cors, express.json, static frontend serving from ../frontend, error handler last, port 3000",
+                task: "Create server.js mounting all routes, cors, express.json, static frontend serving from ../frontend, error handler last, start on process.env.PORT || 3000",
                 filename: "server.js",
                 purpose: "Express app entry point",
                 dependsOn: []
@@ -497,7 +497,7 @@ function getFallbackPlan() {
     return [
         { step: 1, task: "Create utils/dataStore.js — in-memory data arrays with generateId and CRUD helpers", filename: "utils/dataStore.js", purpose: "In-memory data store", dependsOn: [] },
         { step: 2, task: "Create middleware/errorHandler.js — global Express error handler", filename: "middleware/errorHandler.js", purpose: "Error handling middleware", dependsOn: [] },
-        { step: 3, task: "Create server.js — Express app, cors, json, static serving, route mounting, error handler, port 3000", filename: "server.js", purpose: "Express entry point", dependsOn: [] },
+        { step: 3, task: "Create server.js — Express app, cors, json, static serving, route mounting, error handler, start on process.env.PORT || 3000", filename: "server.js", purpose: "Express entry point", dependsOn: [] },
         { step: 4, task: "Create frontend/index.html — semantic HTML5 layout with nav, main area, modals, toast container", filename: "frontend/index.html", purpose: "HTML layout", dependsOn: [] },
         { step: 5, task: "Create frontend/style.css — CSS variables, components, animations, responsive design", filename: "frontend/style.css", purpose: "Styling", dependsOn: [] },
         { step: 6, task: "Create frontend/app.js — state management, API layer, DOM rendering, event delegation, toasts", filename: "frontend/app.js", purpose: "Client logic", dependsOn: [] }

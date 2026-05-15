@@ -1,0 +1,152 @@
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #f1c40f;
+    --background-color: #f9f9f9;
+    --text-color: #333;
+    --completed-text-color: #777;
+    --delete-button-color: #e74c3c;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+nav {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 1em;
+    text-align: center;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2em;
+}
+
+section {
+    background-color: #fff;
+    padding: 1em;
+    border: 1px solid #ddd;
+    border-radius: 0.5em;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2 {
+    margin-top: 0;
+}
+
+#todo-list {
+    width: 100%;
+    max-width: 400px;
+}
+
+#todos {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#todos li {
+    display: flex;
+    align-items: center;
+    padding: 0.8em 0.5em;
+    border-bottom: 1px solid #eee;
+    justify-content: space-between; /* Distribute items */
+}
+
+#todos li:last-child {
+    border-bottom: none;
+}
+
+.todo-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.todo-checkbox {
+    margin-right: 0.8em;
+    transform: scale(1.2); /* Make checkbox slightly larger */
+}
+
+.todo-title {
+    flex-grow: 1; /* Allow title to take available space */
+    font-size: 1.1em;
+    margin-right: 1em;
+    word-break: break-word; /* Prevent long words from overflowing */
+}
+
+.todo-title.completed {
+    text-decoration: line-through;
+    color: var(--completed-text-color);
+}
+
+#create-todo {
+    margin-top: 1em;
+    display: flex;
+    gap: 0.5em; /* Space between input and button */
+}
+
+#todo-input {
+    flex-grow: 1; /* Allow input to take available space */
+    padding: 0.7em;
+    border: 1px solid #ccc;
+    border-radius: 0.5em;
+    font-size: 1em;
+}
+
+#create-btn {
+    background-color: var(--primary-color);
+    color: #fff;
+    padding: 0.7em 1.2em;
+    border: none;
+    border-radius: 0.5em;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
+}
+
+#create-btn:hover {
+    background-color: var(--secondary-color);
+}
+
+.delete-btn {
+    background-color: var(--delete-button-color);
+    color: #fff;
+    padding: 0.4em 0.8em;
+    border: none;
+    border-radius: 0.3em;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+    margin-left: 0.5em; /* Space from title */
+}
+
+.delete-btn:hover {
+    background-color: #c0392b; /* Darker red on hover */
+}
+
+@media (max-width: 768px) {
+    main {
+        padding: 1em;
+    }
+    section {
+        margin-bottom: 1em;
+    }
+    #create-todo {
+        flex-direction: column;
+    }
+    #todo-input {
+        width: auto; /* Reset width for column layout */
+    }
+    #create-btn {
+        width: 100%;
+    }
+}

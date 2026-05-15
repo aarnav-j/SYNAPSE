@@ -1,0 +1,1 @@
+This file handles all Todo entity business logic and database interactions. It imports the database connection and provides methods for CRUD operations.

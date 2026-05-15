@@ -654,8 +654,8 @@ async function boot() {
 
     // ── Start server ──
 
-    app.listen(3005, () => {
-        log.success("SERVER", "SYNAPSE running on http://localhost:3005");
+    app.listen(3001, () => {
+        log.success("SERVER", "SYNAPSE running on http://localhost:3001");
         log.info("SERVER", "Public:    POST /auth/register | POST /auth/login | GET /status");
         log.info("SERVER", "Protected: POST /prompt | GET /history | GET /projects/:id/files");
         log.info("SERVER", "Debug:     POST /debug/:projectId | POST /debug/chat/:sessionId");

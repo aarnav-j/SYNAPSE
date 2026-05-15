@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Application</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav>
+        <h1>Todo Application</h1>
+    </nav>
+    <main>
+        <section id="todo-list">
+            <h2>Todo List</h2>
+            <ul id="todos"></ul>
+            <form id="create-todo">
+                <input type="text" id="todo-input" placeholder="Enter new todo item">
+                <button id="create-btn">Create</button>
+            </form>
+        </section>
+    </main>
+    <footer>
+        <p>&copy; 2024 Todo Application</p>
+    </footer>
+    <div id="loading" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.7); color: white; padding: 1em 2em; border-radius: 0.5em; z-index: 1000;">Loading...</div>
+    <script src="app.js" defer></script>
+</body>
+</html>

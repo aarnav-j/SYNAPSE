@@ -17,9 +17,9 @@ const log = require("../utils/logger");
 
 // ── Constants ──
 
-const MAX_FILE_LENGTH = 4000;
-const MAX_HISTORY_MESSAGES = 8;
-const MAX_CONTEXT_FILES = 12;
+const MAX_FILE_LENGTH = 2500;
+const MAX_HISTORY_MESSAGES = 6;
+const MAX_CONTEXT_FILES = 5;
 
 // ── Issue Classifier ──
 // Determines which files are relevant to the user's issue

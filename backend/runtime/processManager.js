@@ -9,6 +9,7 @@ const path = require("path");
 const fs = require("fs");
 const log = require("../utils/logger");
 const EventEmitter = require("events");
+const net = require("net");
 
 // ── Process Registry ──
 // Key: projectName, Value: { process, status, port, logs }
@@ -105,8 +106,29 @@ function getOrCreateEntry(projectName) {
 
 function addLog(projectName, type, message) {
     const entry = getOrCreateEntry(projectName);
+    
+    // Map type to level and category
+    let level, category;
+    switch(type) {
+        case "stdout":
+            level = "INFO";
+            category = "OUTPUT";
+            break;
+        case "stderr":
+            level = "ERROR";
+            category = "ERROR";
+            break;
+        case "system":
+        default:
+            level = "INFO";
+            category = "SYSTEM";
+            break;
+    }
+    
     const logEntry = {
         type,       // stdout | stderr | system
+        level,      // INFO | ERROR | WARN
+        category,   // OUTPUT | ERROR | SYSTEM
         message,
         timestamp: new Date().toISOString()
     };
@@ -172,17 +194,38 @@ async function runProject(projectName) {
     entry.status = "running";
     entry.startedAt = new Date().toISOString();
 
+    const getFreePort = () => new Promise((resolve, reject) => {
+        const srv = net.createServer();
+        srv.listen(0, () => {
+            const port = srv.address().port;
+            srv.close((err) => {
+                if (err) reject(err);
+                else resolve(port);
+            });
+        });
+        srv.on('error', reject);
+    });
+
+    let assignedPort;
+    try {
+        assignedPort = await getFreePort();
+    } catch (err) {
+        log.error("RUNTIME", `Failed to find free port for ${projectName}: ${err.message}`);
+        return { success: false, error: "Failed to allocate port" };
+    }
+
     const proc = spawn("node", [entryFile], {
         cwd: backendDir,
         shell: false,
-        env: { ...process.env, PORT: "3000" }
+        env: { ...process.env, PORT: assignedPort.toString() }
     });
 
     entry.process = proc;
     entry.pid = proc.pid;
-    entry.port = 3000;
+    entry.port = assignedPort;
 
     log.success("RUNTIME", `Project ${projectName} started (PID: ${proc.pid})`);
+    addLog(projectName, "system", `[SYNAPSE] App is running at: http://localhost:${assignedPort}`);
 
     proc.stdout.on("data", (data) => {
         const lines = data.toString().split("\n").filter(l => l.trim());
@@ -222,7 +265,7 @@ async function runProject(projectName) {
         entry.pid = null;
     });
 
-    return { success: true, pid: proc.pid, port: 3000, entryFile };
+    return { success: true, pid: proc.pid, port: assignedPort, entryFile };
 }
 
 // ── Stop a project ──
